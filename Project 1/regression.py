@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import preprocessing
+from sklearn import linear_model
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 
@@ -46,7 +47,7 @@ class GeneralRegression:
                 self.X[:, idx] = (x ** (i)) * (y ** (j))
                 idx += 1
 
-        self.X = self.X[:, 1:]
+        # self.X = self.X[:, 1:]
         # self.X = preprocessing.MinMaxScaler().fit_transform(self.X)
 
     def split_training_and_test(self, treshold: float):
@@ -67,11 +68,6 @@ class GeneralRegression:
 
 
 class OSLpredictor(GeneralRegression):
-    def __init__(
-        self, x: np.array, y: np.array, f: np.array, degree: int, treshold: float
-    ) -> None:
-        super().__init__(x, y, f, degree, treshold)
-
     def compute_parameters(self):
         self.params = (
             np.linalg.inv(self.X_train.T @ self.X_train) @ self.X_train.T
@@ -79,11 +75,6 @@ class OSLpredictor(GeneralRegression):
 
 
 class Ridgepredictor(GeneralRegression):
-    def __init__(
-        self, x: np.array, y: np.array, f: np.array, degree: int, treshold: float
-    ) -> None:
-        super().__init__(x, y, f, degree, treshold)
-
     def compute_parameters(self, lam: float):
         n = self.X_train.shape[1]
         # Formula from lecture
@@ -91,6 +82,13 @@ class Ridgepredictor(GeneralRegression):
             np.linalg.inv(self.X_train.T @ self.X_train + lam * np.eye(n))
             @ self.X_train.T
         ) @ self.z_train
+
+
+class Lassopredictor(GeneralRegression):
+    def compute_parameters(self, alpha: float) -> None:
+        clf = linear_model.Lasso(alpha=alpha)
+        clf.fit(self.X_train, self.z_train)
+        self.params = clf.coef_
 
 
 if __name__ == "__main__":
@@ -102,8 +100,8 @@ if __name__ == "__main__":
     z = FrankeFunction(x, y)
 
     # print((x * y**0).flatten())
-    test = OSLpredictor(x.flatten(), y.flatten(), z.flatten(), 6, 0.2)
-    test.compute_parameters()
+    test = Lassopredictor(x.flatten(), y.flatten(), z.flatten(), 5, 0.2)
+    test.compute_parameters(0.00000001)
     fig = plt.figure()
     ax = fig.gca(projection="3d")
     surf = ax.plot_surface(
