@@ -4,6 +4,7 @@ from sklearn import preprocessing
 from sklearn import linear_model
 from mpl_toolkits.mplot3d import Axes3D
 from sklearn.model_selection import train_test_split
+from sklearn.utils import resample
 from matplotlib import cm
 
 
@@ -73,6 +74,8 @@ class GeneralRegression:
             return (
                 np.sum((self.z_train - self.predicted_train) ** 2) / self.z_train.size
             )
+        else:
+            return np.sum((self.z_test - self.predicted_test) ** 2) / self.z_test.size
 
     def R2(self):
         pass
@@ -82,12 +85,74 @@ class GeneralRegression:
 
         self.fitter.fit(self.X_train)
         self.fitter.transform(self.X_train)
-        self.fitter.transform(self.X)
         self.fitter.transform(self.X_test)
+
+    def predict_test(self):
+        self.predicted_test = self.X_test @ self.params
+
+    def predict_train(self):
+        self.predict_train = self.X_train @ self.params
+
+    def predict_entire_dataset(self) -> np.array:
+        if self.scale:
+            self.fitter.transform(self.X)
+        return self.X @ self.params
+
+    def bootstrap(self, nr_of_its: int, lam: float) -> None:
+        nr_of_its = int(nr_of_its)
+        self.bootstrap_results = np.zeros((self.X_test.shape[0], nr_of_its))
+
+        for i in range(nr_of_its):
+            X_, Y_ = resample(self.X_train, self.z_train)
+
+            self.compute_parameters(lam)
+            self.bootstrap_results[:, i] = self.predict_test()
+
+    def cross_validation(self, nr_of_groups: int, lam: float) -> None:
+        n = self.X.shape[0]
+        self.indexes = np.random.permutation(n)
+        self.results = np.zeros(nr_of_groups)
+
+        self.part = [0] * (nr_of_groups + 1)
+
+        inc = n // nr_of_groups
+        extra = n % nr_of_groups
+
+        for i in range(1, nr_of_groups + 1):
+            self.part[i] = self.part[i - 1] + inc + (extra > 0)
+            extra -= 1
+
+        for i in range(1, nr_of_groups + 1):
+            # print(self.indexes[0 : self.part[i - 1]])
+            self.X_train = np.concatenate(
+                (
+                    self.X[self.indexes[0 : self.part[i - 1]], :],
+                    self.X[self.indexes[self.part[i] :], :],
+                )
+            )
+
+            self.z_train = np.concatenate(
+                (
+                    self.z[self.indexes[0 : self.part[i - 1]]],
+                    self.z[self.indexes[self.part[i] :]],
+                )
+            )
+
+            self.X_test = self.X[self.indexes[self.part[i - 1] : self.part[i]], :]
+            self.z_test = self.z[self.indexes[self.part[i - 1] : self.part[i]]]
+
+            self.scale_data()
+            self.compute_parameters(lam)
+
+            self.predict_test()
+            self.results[i - 1] = self.MSE(False)
+
+    def compute_parameters(self, lam):
+        raise NotImplementedError
 
 
 class OSLpredictor(GeneralRegression):
-    def compute_parameters(self):
+    def compute_parameters(self, lam=None):
         self.params = (
             np.linalg.inv(self.X_train.T @ self.X_train) @ self.X_train.T
         ) @ self.z_train
@@ -120,7 +185,14 @@ if __name__ == "__main__":
 
     # print((x * y**0).flatten())
     test = OSLpredictor(x.flatten(), y.flatten(), z.flatten(), 5, 0.2)
-    test.compute_parameters()
+
+    tmp = np.zeros(7)
+    for _ in range(1000):
+        test.cross_validation(7, 0)
+        tmp += test.results
+
+    print(tmp / 1000)
+    """ test.compute_parameters()
     fig = plt.figure()
     ax = fig.gca(projection="3d")
     surf = ax.plot_surface(
@@ -131,7 +203,7 @@ if __name__ == "__main__":
         linewidth=0,
         antialiased=False,
     )
-    plt.show()
+    plt.show() """
     # print(
     #    np.sum(((test.X_train @ test.params) - test.z_train) ** 2) / test.z_train.size
     # )
