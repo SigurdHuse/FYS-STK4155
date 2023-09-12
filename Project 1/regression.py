@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from sklearn import preprocessing
 from sklearn import linear_model
 from mpl_toolkits.mplot3d import Axes3D
+from sklearn.model_selection import train_test_split
 from matplotlib import cm
 
 
@@ -18,13 +19,20 @@ class GeneralRegression:
     """Master class for all regression problems"""
 
     def __init__(
-        self, x: np.array, y: np.array, z: np.array, degree: int, treshold: float
+        self,
+        x: np.array,
+        y: np.array,
+        z: np.array,
+        degree: int,
+        treshold: float,
+        scale: bool = True,
     ) -> None:
         self.x = x
         self.y = y
         self.z = z
         # self.n = y.size
         self.treshold = treshold
+        self.scale = scale
 
         self.predicted_train = None
         self.predicted_test = None
@@ -33,10 +41,12 @@ class GeneralRegression:
 
         self.make_design_matrix(x, y, degree)
         self.split_training_and_test(treshold)
+        if scale:
+            self.scale_data()
 
     def make_design_matrix(self, x: np.array, y: np.array, degree: int) -> None:
-        self.nr_of_params = (degree + 1) * (degree + 1) - 1
-        self.X = np.zeros((x.size, (degree + 1) * (degree + 1)))
+        self.nr_of_params = (degree + 1) * (degree + 2) // 2
+        self.X = np.zeros((x.size, self.nr_of_params))
         idx = 0
 
         # If degree = 1, we want [x, y]
@@ -44,15 +54,16 @@ class GeneralRegression:
 
         for j in range(0, degree + 1):
             for i in range(0, degree + 1):
+                if i + j > degree:
+                    break
                 self.X[:, idx] = (x ** (i)) * (y ** (j))
+                # self.X[:, idx] -= np.mean(self.X[:, idx])
                 idx += 1
 
-        # self.X = self.X[:, 1:]
-        # self.X = preprocessing.MinMaxScaler().fit_transform(self.X)
+        # We do not compute beta_0
+        self.X = self.X[:, 1:]
 
     def split_training_and_test(self, treshold: float):
-        from sklearn.model_selection import train_test_split
-
         self.X_train, self.X_test, self.z_train, self.z_test = train_test_split(
             self.X, self.z, test_size=treshold
         )
@@ -65,6 +76,14 @@ class GeneralRegression:
 
     def R2(self):
         pass
+
+    def scale_data(self):
+        self.fitter = preprocessing.StandardScaler()
+
+        self.fitter.fit(self.X_train)
+        self.fitter.transform(self.X_train)
+        self.fitter.transform(self.X)
+        self.fitter.transform(self.X_test)
 
 
 class OSLpredictor(GeneralRegression):
@@ -100,8 +119,8 @@ if __name__ == "__main__":
     z = FrankeFunction(x, y)
 
     # print((x * y**0).flatten())
-    test = Lassopredictor(x.flatten(), y.flatten(), z.flatten(), 5, 0.2)
-    test.compute_parameters(0.00000001)
+    test = OSLpredictor(x.flatten(), y.flatten(), z.flatten(), 5, 0.2)
+    test.compute_parameters()
     fig = plt.figure()
     ax = fig.gca(projection="3d")
     surf = ax.plot_surface(
