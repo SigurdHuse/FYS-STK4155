@@ -178,15 +178,17 @@ class GeneralRegression:
         self.bootstrap_results = np.zeros((self.X_test.shape[0], nr_of_its))
 
         for i in range(nr_of_its):
-            X_, Y_ = resample(self.X_train, self.z_train)
+            X_, z_ = resample(self.X_train, self.z_train)
 
-            self.compute_parameters(lam)
-            self.bootstrap_results[:, i] = self.predict_test()
+            self.computer_parameters_from_input(X_, z_, lam)
+            self.predict_test()
+            # print(self.params)
+            self.bootstrap_results[:, i] = self.predicted_test
 
     def cross_validation(self, nr_of_groups: int, lam: float) -> None:
         n = self.X.shape[0]
         self.indexes = np.random.permutation(n)
-        self.results = np.zeros(nr_of_groups)
+        self.results_cross_val = np.zeros(nr_of_groups)
 
         self.part = [0] * (nr_of_groups + 1)
 
@@ -220,7 +222,7 @@ class GeneralRegression:
             self.compute_parameters(lam)
 
             self.predict_test()
-            self.results[i - 1] = self.MSE(False)
+            self.results_cross_val[i - 1] = self.MSE(False)
 
     def compute_parameters(self, lam: float) -> None:
         """This method is not supposed to be called from this class, but insted be implemented in
@@ -236,8 +238,15 @@ class GeneralRegression:
             "This method is not supposed to be called from this class"
         )
 
+    def computer_parameters_from_input(
+        self, X: np.array, z: np.array, lam=None
+    ) -> None:
+        raise NotImplementedError(
+            "This method is not supposed to be called from this class"
+        )
 
-class OSLpredictor(GeneralRegression):
+
+class OLSpredictor(GeneralRegression):
     def compute_parameters(self, lam=None):
         """Computes parameters of model using standard least squared regression.
 
@@ -247,6 +256,18 @@ class OSLpredictor(GeneralRegression):
         self.params = (
             np.linalg.inv(self.X_train.T @ self.X_train) @ self.X_train.T
         ) @ self.z_train
+
+    def computer_parameters_from_input(
+        self, X: np.array, z: np.array, lam=None
+    ) -> None:
+        """Computes parameters of model using standard least squared regression, with given design matrix and prediction targets.
+
+        Args:
+            X (np.array): Design matrix
+            z (np.array): Values to predict
+            lam (any, optional): This is only here as GeneralRegression class requires it. Defaults to None.
+        """
+        self.params = (np.linalg.inv(X.T @ X) @ X.T) @ z
 
 
 class Ridgepredictor(GeneralRegression):
@@ -285,7 +306,7 @@ if __name__ == "__main__":
     z = FrankeFunction(x, y)
 
     # print((x * y**0).flatten())
-    test = OSLpredictor(x.flatten(), y.flatten(), z.flatten(), 5, 0.2)
+    test = OLSpredictor(x.flatten(), y.flatten(), z.flatten(), 5, 0.2)
 
     tmp = np.zeros(7)
     for _ in range(1000):

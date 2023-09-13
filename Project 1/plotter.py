@@ -1,4 +1,4 @@
-from regression import OSLpredictor, Ridgepredictor, Lassopredictor, FrankeFunction
+from regression import OLSpredictor, Ridgepredictor, Lassopredictor, FrankeFunction
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -54,7 +54,7 @@ def plot_MSE_or_R2_as_func_of_degree(
 
     for deg in degrees:
         if regression_type == "OLS":
-            model = OSLpredictor(x, y, z, deg, threshold, scale)
+            model = OLSpredictor(x, y, z, deg, threshold, scale)
         elif regression_type == "Ridge":
             model = Ridgepredictor(x, y, z, deg, threshold, scale)
         elif regression_type == "Lasso":
@@ -111,8 +111,79 @@ def plot_MSE_or_R2_as_func_of_degree(
     plt.savefig(dir_name + "/" + filename)
 
 
-def plot_MSE_using_bootstrap_and_OSL(nr_of_its, nr_of_degs) -> None:
-    pass
+def plot_Bias_variance_using_bootstrap_and_OLS(
+    x: np.array,
+    y: np.array,
+    z: np.array,
+    nr_of_its: int,
+    mx_degree: int,
+    treshold: float,
+    scale: bool,
+) -> None:
+    degrees = list(range(1, mx_degree + 1))
+    error = np.zeros(mx_degree)
+    bias = np.zeros(mx_degree)
+    variance = np.zeros(mx_degree)
+
+    for deg in degrees:
+        model = OLSpredictor(x, y, z, deg, treshold, scale)
+        model.bootstrap(nr_of_its, None)
+
+        model.z_test = model.z_test.reshape(-1, 1)
+        # print(model.bootstrap_results)
+        error[deg - 1] = np.mean(
+            np.mean(
+                (model.z_test - model.bootstrap_results) ** 2, axis=1, keepdims=True
+            )
+        )
+
+        bias[deg - 1] = np.mean(
+            (model.z_test - np.mean(model.bootstrap_results, axis=1, keepdims=True))
+            ** 2
+        )
+        variance[deg - 1] = np.mean(
+            np.var(model.bootstrap_results, axis=1, keepdims=True)
+        )
+
+        # print(model.bootstrap_results)
+    plt.plot(degrees, bias)
+    plt.plot(degrees, error)
+    plt.plot(degrees, variance)
+    plt.show()
+
+
+def plot_bias_variance_using_cross_validation(
+    x: np.array,
+    y: np.array,
+    z: np.array,
+    nr_of_groups: list,
+    mx_degree: int,
+    lam: list,
+    model: str,
+    threshold: float,
+    scale: bool,
+) -> None:
+    degrees = list(range(1, mx_degree + 1))
+    results = np.zeros((len(nr_of_groups), mx_degree))
+
+    for deg in degrees:
+        for idx, group in enumerate(nr_of_groups):
+            if model == "OLS":
+                cur_model = OLSpredictor(x, y, z, deg, threshold, scale)
+            elif model == "Ridge":
+                cur_model = Ridgepredictor(x, y, z, deg, threshold, scale)
+            elif model == "Lasso":
+                cur_model = Lassopredictor(x, y, z, deg, threshold, scale)
+            else:
+                raise NotImplementedError
+
+            cur_model.cross_validation(group, lam)
+            results[idx, deg - 1] = np.mean(cur_model.results_cross_val)
+
+    plt.grid()
+    for i in range(len(nr_of_groups)):
+        plt.plot(degrees, results[i])
+    plt.show()
 
 
 if __name__ == "__main__":
@@ -127,14 +198,14 @@ if __name__ == "__main__":
     x, y = np.meshgrid(x, y)
     z = FrankeFunction(x, y)
 
-    osl_plots = [(True, "MSE_OSL.png"), (False, "R2_OSL.png")]
+    """ ols_plots = [(True, "MSE_OLS.png"), (False, "R2_OLS.png")]
 
-    for i in osl_plots:
+    for i in ols_plots:
         plot_MSE_or_R2_as_func_of_degree(
             x=x.flatten(),
             y=y.flatten(),
             z=z.flatten(),
-            nr_of_degs=10,
+            nr_of_degs=11,
             threshold=0.2,
             scale=True,
             lam=[0],
@@ -175,4 +246,25 @@ if __name__ == "__main__":
             regression_type="Lasso",
             plot_MSE=i[0],
             plot_with_lam=True,
-        )
+        ) """
+
+    """ plot_Bias_variance_using_bootstrap_and_OLS(
+        x=x.flatten(),
+        y=y.flatten(),
+        z=z.flatten(),
+        nr_of_its=200,
+        mx_degree=10,
+        treshold=0.2,
+        scale=True,
+    ) """
+    plot_bias_variance_using_cross_validation(
+        x=x.flatten(),
+        y=y.flatten(),
+        z=z.flatten(),
+        nr_of_groups=[5, 6, 7, 8, 9, 10],
+        mx_degree=11,
+        lam=0.01,
+        model="OLS",
+        threshold=0.2,
+        scale=True,
+    )
