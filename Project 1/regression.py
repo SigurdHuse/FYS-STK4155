@@ -155,7 +155,9 @@ class GeneralRegression:
             self.results[i - 1] = self.MSE(False)
 
     def compute_parameters(self, lam: float):
-        raise NotImplementedError
+        raise NotImplementedError(
+            "This method is not supposed to be called from this class"
+        )
 
 
 class OSLpredictor(GeneralRegression):

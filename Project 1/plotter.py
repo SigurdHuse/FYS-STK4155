@@ -41,7 +41,9 @@ def plot_MSE_or_R2_as_func_of_degree(
         elif regression_type == "Lasso":
             model = Lassopredictor(x, y, z, deg, threshold, scale)
         else:
-            raise NotImplementedError
+            raise NotImplementedError(
+                f"The {regression_type} regression is not implemented"
+            )
 
         for idx, la in enumerate(lam):
             model.compute_parameters(la)
@@ -110,7 +112,7 @@ if __name__ == "__main__":
         True,
         [1, 0.1, 0.001],
         "MSE_OSL.png",
-        "Ridge",
+        "Ridg",
         True,
         True,
     )
