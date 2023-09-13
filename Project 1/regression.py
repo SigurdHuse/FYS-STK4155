@@ -8,7 +8,16 @@ from sklearn.utils import resample
 from matplotlib import cm
 
 
-def FrankeFunction(x, y):
+def FrankeFunction(x: np.array, y: np.array) -> np.array:
+    """Computes the Franke function for given x- and y-coordinates
+
+    Args:
+        x (np.array): Mesh grid containing x-coordinates
+        y (np.array): Mesh grid containing y-coordinates
+
+    Returns:
+        np.array: 2D-array containing computed values.
+    """
     term1 = 0.75 * np.exp(-(0.25 * (9 * x - 2) ** 2) - 0.25 * ((9 * y - 2) ** 2))
     term2 = 0.75 * np.exp(-((9 * x + 1) ** 2) / 49.0 - 0.1 * (9 * y + 1))
     term3 = 0.5 * np.exp(-((9 * x - 7) ** 2) / 4.0 - 0.25 * ((9 * y - 3) ** 2))
@@ -17,7 +26,8 @@ def FrankeFunction(x, y):
 
 
 class GeneralRegression:
-    """Master class for all regression problems"""
+    """Master class for all regression problems,
+    this class is not intended to be used but be inherited from"""
 
     def __init__(
         self,
@@ -28,6 +38,16 @@ class GeneralRegression:
         treshold: float,
         scale: bool = True,
     ) -> None:
+        """Constructor for the general regression class
+
+        Args:
+            x (np.array): Coordinates in x-direction
+            y (np.array): Coordinates in y-direction
+            z (np.array): Value model is trying to predict, in z-direction
+            degree (int): Degree of polynomials in design matrix
+            treshold (float): Treshold to split training and test data
+            scale (bool, optional): Bool to decide if data should be scaled. Defaults to True.
+        """
         self.x = x
         self.y = y
         self.z = z
@@ -46,6 +66,14 @@ class GeneralRegression:
             self.scale_data()
 
     def make_design_matrix(self, x: np.array, y: np.array, degree: int) -> None:
+        """Makes design matrix for x- and y-coordinates, by multiplying them togheter and making
+        polynomials with sum of degrees smaller or equal given degree.
+
+        Args:
+            x (np.array): x-coordinates
+            y (np.array): y-coordinates
+            degree (int): Max degree of constructed polynomials
+        """
         self.nr_of_params = (degree + 1) * (degree + 2) // 2
         self.X = np.zeros((x.size, self.nr_of_params))
         idx = 0
@@ -64,12 +92,27 @@ class GeneralRegression:
         # We do not compute beta_0
         self.X = self.X[:, 1:]
 
-    def split_training_and_test(self, treshold: float):
+    def split_training_and_test(self, treshold: float) -> None:
+        """Split input data into training and test data.
+
+        Args:
+            treshold (float): Treshold used to split data. For example treshold = 0.2,
+                              splits the data into 20% test and 80% training.
+        """
         self.X_train, self.X_test, self.z_train, self.z_test = train_test_split(
             self.X, self.z, test_size=treshold
         )
 
     def MSE(self, on_training: bool) -> float:
+        """Computes MSE for training or test data.
+
+        Args:
+            on_training (bool): If true MSE is computed on training data, if false MSE is
+                                computed on test data.
+
+        Returns:
+            float: Computed MSE.
+        """
         if on_training:
             return (
                 np.sum((self.z_train - self.predicted_train) ** 2) / self.z_train.size
@@ -78,6 +121,15 @@ class GeneralRegression:
             return np.sum((self.z_test - self.predicted_test) ** 2) / self.z_test.size
 
     def R2(self, on_training: bool) -> float:
+        """Computes R2-score on training or test data.
+
+        Args:
+            on_training (bool): If true MSE is computed on training data, if false MSE is
+                                computed on test data.
+
+        Returns:
+            float: Computed R2-score.
+        """
         if on_training:
             return 1 - np.sum((self.z_train - self.predicted_train) ** 2) / np.sum(
                 ((self.z_train - np.mean(self.z_train)) ** 2)
@@ -87,26 +139,42 @@ class GeneralRegression:
                 ((self.z_test - np.mean(self.z_test)) ** 2)
             )
 
-    def scale_data(self):
+    def scale_data(self) -> None:
+        """Scales data according to sklearn's StandardScaler using training data."""
         self.fitter = preprocessing.StandardScaler()
 
         self.fitter.fit(self.X_train)
         self.fitter.transform(self.X_train)
         self.fitter.transform(self.X_test)
 
-    def predict_test(self):
+    def predict_test(self) -> None:
+        """Predicts z-values for test data, using computed parameters of model."""
         self.predicted_test = self.X_test @ self.params
 
-    def predict_train(self):
+    def predict_train(self) -> None:
+        """Predicts z-values for training data, using computed parameters of model."""
         self.predicted_train = self.X_train @ self.params
 
     def predict_entire_dataset(self) -> np.array:
+        """Predicts z-values for entire dataset, using computed parameters of model.
+
+        Returns:
+            np.array: Predicted z-values
+        """
         if self.scale:
             self.fitter.transform(self.X)
         return self.X @ self.params
 
     def bootstrap(self, nr_of_its: int, lam: float) -> None:
+        """Performs the resampling technique bootstrap on the training data.
+
+        Args:
+            nr_of_its (int): Number of boostrap iterations performed.
+            lam (float): Lambda parameter to use in regression method.
+        """
         nr_of_its = int(nr_of_its)
+
+        # Predicted z-values for test data is stored in each column
         self.bootstrap_results = np.zeros((self.X_test.shape[0], nr_of_its))
 
         for i in range(nr_of_its):
@@ -154,7 +222,16 @@ class GeneralRegression:
             self.predict_test()
             self.results[i - 1] = self.MSE(False)
 
-    def compute_parameters(self, lam: float):
+    def compute_parameters(self, lam: float) -> None:
+        """This method is not supposed to be called from this class, but insted be implemented in
+        classes which inherit from the GeneralRegression class.
+
+        Args:
+            lam (float): Argument for regression model.
+
+        Raises:
+            NotImplementedError: This method is not supposed to be called from this class
+        """
         raise NotImplementedError(
             "This method is not supposed to be called from this class"
         )
@@ -162,6 +239,11 @@ class GeneralRegression:
 
 class OSLpredictor(GeneralRegression):
     def compute_parameters(self, lam=None):
+        """Computes parameters of model using standard least squared regression.
+
+        Args:
+            lam (any, optional): This is only here as GeneralRegression class requires it. Defaults to None.
+        """
         self.params = (
             np.linalg.inv(self.X_train.T @ self.X_train) @ self.X_train.T
         ) @ self.z_train
@@ -169,6 +251,11 @@ class OSLpredictor(GeneralRegression):
 
 class Ridgepredictor(GeneralRegression):
     def compute_parameters(self, lam: float):
+        """Computes parameters of model using Ridge regression.
+
+        Args:
+            lam (float): Lambda parameter in Ridge regression.
+        """
         n = self.X_train.shape[1]
         # Formula from lecture
         self.params = (
@@ -179,6 +266,11 @@ class Ridgepredictor(GeneralRegression):
 
 class Lassopredictor(GeneralRegression):
     def compute_parameters(self, alpha: float) -> None:
+        """Computes parameters of model using sklearn's Lasso regression.
+
+        Args:
+            alpha (float): Alpha parameter of Lasso regression.
+        """
         clf = linear_model.Lasso(alpha=alpha)
         clf.fit(self.X_train, self.z_train)
         self.params = clf.coef_

@@ -104,15 +104,15 @@ if __name__ == "__main__":
     z = FrankeFunction(x, y)
 
     plot_MSE_or_R2_as_func_of_degree(
-        x.flatten(),
-        y.flatten(),
-        z.flatten(),
-        12,
-        0.2,
-        True,
-        [1, 0.1, 0.001],
-        "MSE_OSL.png",
-        "Ridg",
-        True,
-        True,
+        x=x.flatten(),
+        y=y.flatten(),
+        z=z.flatten(),
+        nr_of_degs=12,
+        threshold=0.2,
+        scale=True,
+        lam=[0],
+        filename="MSE_OSL.png",
+        regression_type="OLS",
+        plot_MSE=True,
+        plot_with_lam=True,
     )
