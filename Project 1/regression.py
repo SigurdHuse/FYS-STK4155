@@ -77,8 +77,15 @@ class GeneralRegression:
         else:
             return np.sum((self.z_test - self.predicted_test) ** 2) / self.z_test.size
 
-    def R2(self):
-        pass
+    def R2(self, on_training: bool) -> float:
+        if on_training:
+            return 1 - np.sum((self.z_train - self.predicted_train) ** 2) / np.sum(
+                ((self.z_train - np.mean(self.z_train)) ** 2)
+            )
+        else:
+            return 1 - np.sum((self.z_test - self.predicted_test) ** 2) / np.sum(
+                ((self.z_test - np.mean(self.z_test)) ** 2)
+            )
 
     def scale_data(self):
         self.fitter = preprocessing.StandardScaler()
@@ -91,7 +98,7 @@ class GeneralRegression:
         self.predicted_test = self.X_test @ self.params
 
     def predict_train(self):
-        self.predict_train = self.X_train @ self.params
+        self.predicted_train = self.X_train @ self.params
 
     def predict_entire_dataset(self) -> np.array:
         if self.scale:
@@ -147,7 +154,7 @@ class GeneralRegression:
             self.predict_test()
             self.results[i - 1] = self.MSE(False)
 
-    def compute_parameters(self, lam):
+    def compute_parameters(self, lam: float):
         raise NotImplementedError
 
 
