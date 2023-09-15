@@ -52,7 +52,7 @@ def plot_MSE_or_R2_as_func_of_degree(
     results_test = np.zeros((len(lam), nr_of_degs))
     results_train = np.zeros((len(lam), nr_of_degs))
 
-    for deg in degrees:
+    for j, deg in enumerate(degrees):
         if regression_type == "OLS":
             model = OLSpredictor(x, y, z, deg, threshold, scale)
         elif regression_type == "Ridge":
@@ -63,18 +63,18 @@ def plot_MSE_or_R2_as_func_of_degree(
             raise NotImplementedError(
                 f"The {regression_type} regression is not implemented"
             )
-
+        # print(model.X.dtype)
         for idx, la in enumerate(lam):
             model.compute_parameters(la)
             model.predict_test()
             model.predict_train()
 
             if plot_MSE:
-                results_train[idx, deg - 1] = model.MSE(on_training=True)
-                results_test[idx, deg - 1] = model.MSE(on_training=False)
+                results_train[idx, j] = model.MSE(on_training=True)
+                results_test[idx, j] = model.MSE(on_training=False)
             else:
-                results_train[idx, deg - 1] = model.R2(on_training=True)
-                results_test[idx, deg - 1] = model.R2(on_training=False)
+                results_train[idx, j] = model.R2(on_training=True)
+                results_test[idx, j] = model.R2(on_training=False)
 
     fig, (ax1, ax2) = plt.subplots(1, 2)
 
@@ -119,6 +119,7 @@ def plot_Bias_variance_using_bootstrap_and_OLS(
     mx_degree: int,
     treshold: float,
     scale: bool,
+    filename: str,
 ) -> None:
     degrees = list(range(1, mx_degree + 1))
     error = np.zeros(mx_degree)
@@ -146,10 +147,13 @@ def plot_Bias_variance_using_bootstrap_and_OLS(
         )
 
         # print(model.bootstrap_results)
-    plt.plot(degrees, bias)
-    plt.plot(degrees, error)
-    plt.plot(degrees, variance)
-    plt.show()
+    plt.plot(degrees, bias, label="Bias", linestyle=":", linewidth=3)
+    plt.plot(degrees, error, label="MSE")
+    plt.plot(degrees, variance, label="Variance")
+
+    plt.legend()
+    plt.grid()
+    plt.savefig(dir_name + "/" + filename)
 
 
 def plot_bias_variance_using_cross_validation(
@@ -180,9 +184,13 @@ def plot_bias_variance_using_cross_validation(
             cur_model.cross_validation(group, lam)
             results[idx, deg - 1] = np.mean(cur_model.results_cross_val)
 
+    for i, k in enumerate(nr_of_groups):
+        plt.plot(degrees, results[i], label=f"k = {k}")
+
+    plt.xlabel("Degree")
+    plt.ylabel("MSE")
+    plt.legend()
     plt.grid()
-    for i in range(len(nr_of_groups)):
-        plt.plot(degrees, results[i])
     plt.show()
 
 
@@ -198,14 +206,14 @@ if __name__ == "__main__":
     x, y = np.meshgrid(x, y)
     z = FrankeFunction(x, y)
 
-    """ ols_plots = [(True, "MSE_OLS.png"), (False, "R2_OLS.png")]
+    ols_plots = [(True, "MSE_OLS.png"), (False, "R2_OLS.png")]
 
     for i in ols_plots:
         plot_MSE_or_R2_as_func_of_degree(
             x=x.flatten(),
             y=y.flatten(),
             z=z.flatten(),
-            nr_of_degs=11,
+            nr_of_degs=20,
             threshold=0.2,
             scale=True,
             lam=[0],
@@ -214,6 +222,8 @@ if __name__ == "__main__":
             plot_MSE=i[0],
             plot_with_lam=False,
         )
+        plt.clf()
+    """ 
     lambdas = [1, 0.1, 0.01, 0.001, 0.0001, 0.00001]
     ridge_plots = [(True, "MSE_Ridge.png"), (False, "R2_Ridge.png")]
     for i in ridge_plots:
@@ -230,6 +240,7 @@ if __name__ == "__main__":
             plot_MSE=i[0],
             plot_with_lam=True,
         )
+        plt.clf()
 
     alphas = [0.1, 0.01, 0.001, 0.0001]
     lasso_plots = [(True, "MSE_Lasso.png"), (False, "R2_Lasso.png")]
@@ -246,7 +257,8 @@ if __name__ == "__main__":
             regression_type="Lasso",
             plot_MSE=i[0],
             plot_with_lam=True,
-        ) """
+        )
+        plt.clf() """
 
     """ plot_Bias_variance_using_bootstrap_and_OLS(
         x=x.flatten(),
@@ -256,6 +268,7 @@ if __name__ == "__main__":
         mx_degree=10,
         treshold=0.2,
         scale=True,
+        filename="Bias_variance_bootstrap.png",
     ) """
     plot_bias_variance_using_cross_validation(
         x=x.flatten(),

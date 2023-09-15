@@ -75,7 +75,7 @@ class GeneralRegression:
             degree (int): Max degree of constructed polynomials
         """
         self.nr_of_params = (degree + 1) * (degree + 2) // 2
-        self.X = np.zeros((x.size, self.nr_of_params))
+        self.X = np.zeros((x.size, self.nr_of_params), dtype=np.float64)
         idx = 0
 
         # If degree = 1, we want [x, y]
@@ -85,8 +85,7 @@ class GeneralRegression:
             for i in range(0, degree + 1):
                 if i + j > degree:
                     break
-                self.X[:, idx] = (x ** (i)) * (y ** (j))
-                # self.X[:, idx] -= np.mean(self.X[:, idx])
+                self.X[:, idx] = np.power(x, i) * np.power(y, j)
                 idx += 1
 
         # We do not compute beta_0
@@ -114,11 +113,9 @@ class GeneralRegression:
             float: Computed MSE.
         """
         if on_training:
-            return (
-                np.sum((self.z_train - self.predicted_train) ** 2) / self.z_train.size
-            )
+            return np.mean(np.square(self.z_train - self.predicted_train))
         else:
-            return np.sum((self.z_test - self.predicted_test) ** 2) / self.z_test.size
+            return np.mean(np.square(self.z_test - self.predicted_test))
 
     def R2(self, on_training: bool) -> float:
         """Computes R2-score on training or test data.
@@ -144,16 +141,16 @@ class GeneralRegression:
         self.fitter = preprocessing.StandardScaler()
 
         self.fitter.fit(self.X_train)
-        self.fitter.transform(self.X_train)
-        self.fitter.transform(self.X_test)
+        self.X_train = self.fitter.transform(self.X_train)
+        self.X_test = self.fitter.transform(self.X_test)
 
     def predict_test(self) -> None:
         """Predicts z-values for test data, using computed parameters of model."""
-        self.predicted_test = self.X_test @ self.params
+        self.predicted_test = self.X_test @ self.params + self.z_train.mean()
 
     def predict_train(self) -> None:
         """Predicts z-values for training data, using computed parameters of model."""
-        self.predicted_train = self.X_train @ self.params
+        self.predicted_train = self.X_train @ self.params + self.z_train.mean()
 
     def predict_entire_dataset(self) -> np.array:
         """Predicts z-values for entire dataset, using computed parameters of model.
@@ -162,8 +159,8 @@ class GeneralRegression:
             np.array: Predicted z-values
         """
         if self.scale:
-            self.fitter.transform(self.X)
-        return self.X @ self.params
+            self.X = self.fitter.transform(self.X)
+        return self.X @ self.params + self.z_train.mean()
 
     def bootstrap(self, nr_of_its: int, lam: float) -> None:
         """Performs the resampling technique bootstrap on the training data.
@@ -254,7 +251,7 @@ class OLSpredictor(GeneralRegression):
             lam (any, optional): This is only here as GeneralRegression class requires it. Defaults to None.
         """
         self.params = (
-            np.linalg.inv(self.X_train.T @ self.X_train) @ self.X_train.T
+            np.linalg.pinv(self.X_train.T @ self.X_train) @ self.X_train.T
         ) @ self.z_train
 
     def computer_parameters_from_input(
@@ -267,7 +264,7 @@ class OLSpredictor(GeneralRegression):
             z (np.array): Values to predict
             lam (any, optional): This is only here as GeneralRegression class requires it. Defaults to None.
         """
-        self.params = (np.linalg.inv(X.T @ X) @ X.T) @ z
+        self.params = (np.linalg.pinv(X.T @ X) @ X.T) @ z
 
 
 class Ridgepredictor(GeneralRegression):
@@ -280,7 +277,7 @@ class Ridgepredictor(GeneralRegression):
         n = self.X_train.shape[1]
         # Formula from lecture
         self.params = (
-            np.linalg.inv(self.X_train.T @ self.X_train + lam * np.eye(n))
+            np.linalg.pinv(self.X_train.T @ self.X_train + lam * np.eye(n))
             @ self.X_train.T
         ) @ self.z_train
 
@@ -292,7 +289,7 @@ class Lassopredictor(GeneralRegression):
         Args:
             alpha (float): Alpha parameter of Lasso regression.
         """
-        clf = linear_model.Lasso(alpha=alpha)
+        clf = linear_model.Lasso(alpha=alpha, fit_intercept=False, max_iter=int(1e7))
         clf.fit(self.X_train, self.z_train)
         self.params = clf.coef_
 
@@ -306,26 +303,27 @@ if __name__ == "__main__":
     z = FrankeFunction(x, y)
 
     # print((x * y**0).flatten())
-    test = OLSpredictor(x.flatten(), y.flatten(), z.flatten(), 5, 0.2)
+    test = Lassopredictor(x.flatten(), y.flatten(), z.flatten(), 15, 0.2, True)
 
-    tmp = np.zeros(7)
+    """ tmp = np.zeros(7)
     for _ in range(1000):
         test.cross_validation(7, 0)
         tmp += test.results
 
-    print(tmp / 1000)
-    """ test.compute_parameters()
+    print(tmp / 1000) """
+    test.compute_parameters(1e-4)
+    print(np.var(test.params))
     fig = plt.figure()
     ax = fig.gca(projection="3d")
     surf = ax.plot_surface(
         x,
         y,
-        (test.X @ test.params).reshape((20, 20)),
+        test.predict_entire_dataset().reshape((20, 20)),
         cmap=cm.coolwarm,
         linewidth=0,
         antialiased=False,
     )
-    plt.show() """
+    plt.show()
     # print(
     #    np.sum(((test.X_train @ test.params) - test.z_train) ** 2) / test.z_train.size
     # )
