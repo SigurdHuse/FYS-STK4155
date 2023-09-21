@@ -58,7 +58,7 @@ if __name__ == "__main__":
     alphas = [10, 1, 0.1, 0.01, 0.001]
     results_Lasso = np.zeros((len(alphas), len(degrees)))
 
-    for j, deg in enumerate(degrees):
+    """ for j, deg in enumerate(degrees):
         Lasso_model = Lassopredictor(
             x.flatten(), y.flatten(), terrain1.flatten(), deg, 0.2, True
         )
@@ -67,7 +67,7 @@ if __name__ == "__main__":
             results_Lasso[i, j] = np.mean(Lasso_model.results_cross_val)
 
     for i in range(len(alphas)):
-        ax3.plot(degrees, results_Lasso[i])
+        ax3.plot(degrees, results_Lasso[i]) """
 
     ax1.set_yscale("log")
     ax2.set_yscale("log")

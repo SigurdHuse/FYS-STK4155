@@ -37,6 +37,7 @@ class GeneralRegression:
         degree: int,
         treshold: float,
         scale: bool = True,
+        variance_of_noise: float = -1,
     ) -> None:
         """Constructor for the general regression class
 
@@ -62,6 +63,10 @@ class GeneralRegression:
 
         self.make_design_matrix(x, y, degree)
         self.split_training_and_test(treshold)
+
+        if variance_of_noise > 0:
+            self.z += np.random.normal(0, variance_of_noise, z.shape)
+
         if scale:
             self.scale_data()
 
@@ -179,6 +184,8 @@ class GeneralRegression:
 
             self.computer_parameters_from_input(X_, z_, lam)
             self.predict_test()
+            self.predicted_test -= self.z_train.mean()
+            self.predicted_test += z_.mean()
             # print(self.params)
             self.bootstrap_results[:, i] = self.predicted_test
 
@@ -219,7 +226,7 @@ class GeneralRegression:
             self.compute_parameters(lam)
 
             self.predict_test()
-            self.results_cross_val[i - 1] = self.MSE(False)
+            self.results_cross_val[i - 1] = self.MSE(on_training=False)
 
     def compute_parameters(self, lam: float) -> None:
         """This method is not supposed to be called from this class, but insted be implemented in
