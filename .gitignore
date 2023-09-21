@@ -4,6 +4,7 @@
 # Special
 *.txt
 *.png
+*.pgf
 ### C++ ###
 # Prerequisites
 *.d

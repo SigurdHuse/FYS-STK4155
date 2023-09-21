@@ -1,0 +1,1 @@
+# Projects in the course FYS-STK4155
