@@ -15,7 +15,7 @@ dir_name = "images"
 seed = 2023
 
 
-def plot_MSE_or_R2_as_func_of_degree(
+def plot_MSE_and_R2_as_func_of_degree(
     x: np.array,
     y: np.array,
     z: np.array,
@@ -25,7 +25,6 @@ def plot_MSE_or_R2_as_func_of_degree(
     lam: list,
     filename: str,
     regression_type: str,
-    plot_MSE: bool,
     plot_with_lam: bool,
     variance_of_noise: float,
 ) -> None:
@@ -42,7 +41,6 @@ def plot_MSE_or_R2_as_func_of_degree(
         filename (str): Filename to save plot as.
         regression_type (str): Which type of regression to be used.
                                It is only possible to use OLS, Ridge and Lasso.
-        plot_MSE (bool): True if MSE is to be plotted, False if R2 should be plotted.
         plot_with_lam (bool): True if lambda values are to be part of label.
 
     Raises:
@@ -50,8 +48,11 @@ def plot_MSE_or_R2_as_func_of_degree(
     """
     nr_of_degs = int(nr_of_degs)
     degrees = list(range(1, nr_of_degs + 1))
-    results_test = np.zeros((len(lam), nr_of_degs))
-    results_train = np.zeros((len(lam), nr_of_degs))
+    results_test_MSE = np.zeros((len(lam), nr_of_degs))
+    results_train_MSE = np.zeros((len(lam), nr_of_degs))
+
+    results_test_R2 = np.zeros((len(lam), nr_of_degs))
+    results_train_R2 = np.zeros((len(lam), nr_of_degs))
 
     for j, deg in enumerate(degrees):
         if regression_type == "OLS":
@@ -64,55 +65,70 @@ def plot_MSE_or_R2_as_func_of_degree(
             raise NotImplementedError(
                 f"The {regression_type} regression is not implemented"
             )
-        # print(model.X.dtype)
         for idx, la in enumerate(lam):
             model.compute_parameters(la)
             model.predict_test()
             model.predict_train()
 
-            if plot_MSE:
-                results_train[idx, j] = model.MSE(on_training=True)
-                results_test[idx, j] = model.MSE(on_training=False)
-            else:
-                results_train[idx, j] = model.R2(on_training=True)
-                results_test[idx, j] = model.R2(on_training=False)
+            results_train_MSE[idx, j] = model.MSE(on_training=True)
+            results_test_MSE[idx, j] = model.MSE(on_training=False)
+
+            results_train_R2[idx, j] = model.R2(on_training=True)
+            results_test_R2[idx, j] = model.R2(on_training=False)
 
     fig, (ax1, ax2) = plt.subplots(1, 2)
 
     for idx, la in enumerate(lam):
-        if plot_MSE:
-            label = "MSE"
-            if plot_with_lam:
-                label += rf", $\lambda = $ {lam[idx]}"
-        else:
-            label = "R2"
-            if plot_with_lam:
-                label += rf", $\lambda = $ {lam[idx]}"
+        label = "MSE"
+        if plot_with_lam:
+            label += rf", $\lambda = $ {lam[idx]:.1e}"
 
-        ax1.plot(degrees, results_train[idx], label=label)
-        ax2.plot(degrees, results_test[idx], label=label)
+        ax1.plot(degrees, results_train_MSE[idx], label=label)
+        ax2.plot(degrees, results_test_MSE[idx], label=label)
 
-    if plot_MSE:
-        ax1.set(ylabel="MSE", xlabel="Degree")
-        ax2.set(ylabel="MSE", xlabel="Degree")
-    else:
-        ax1.set(ylabel="R2-score", xlabel="Degree")
-        ax2.set(ylabel="R2-score", xlabel="Degree")
+    ax1.set(ylabel="MSE", xlabel="Degree")
+    ax2.set(xlabel="Degree")
 
     fig.suptitle(f"Regression using {regression_type}")
     ax1.set(title="Training data")
     ax2.set(title="Test data")
 
-    ax2.yaxis.set_label_position("right")
-    ax2.yaxis.tick_right()
     ax1.set_yscale("log")
     ax2.set_yscale("log")
+    ax1.set_yticks([1e-3, 1e-2, 1e-1])
+    ax2.set_yticks([1e-3, 1e-2, 1e-1])
+
     ax1.grid()
     ax2.grid()
-    ax1.legend()
-    # ax2.legend()
+    ax2.legend(loc="center left", bbox_to_anchor=(1, 0.5))
     plt.tight_layout()
-    plt.savefig(dir_name + "/" + filename)
+    plt.savefig(dir_name + "/MSE_" + filename)
+
+    plt.clf()
+    fig, (ax1, ax2) = plt.subplots(1, 2)
+    for idx, la in enumerate(lam):
+        label = "R2"
+        if plot_with_lam:
+            label += rf", $\lambda = $ {lam[idx]:.1e}"
+
+        ax1.plot(degrees, results_train_R2[idx], label=label)
+        ax2.plot(degrees, results_test_R2[idx], label=label)
+
+    ax1.set_yticks([0, 0.2, 0.4, 0.6, 0.8, 1])
+    ax2.set_yticks([0, 0.2, 0.4, 0.6, 0.8, 1])
+
+    ax1.set(ylabel="R2-score", xlabel="Degree")
+    ax2.set(xlabel="Degree")
+
+    fig.suptitle(f"Regression using {regression_type}")
+    ax1.set(title="Training data")
+    ax2.set(title="Test data")
+
+    ax1.grid()
+    ax2.grid()
+    ax2.legend(loc="center left", bbox_to_anchor=(1, 0.5))
+    plt.tight_layout()
+    plt.savefig(dir_name + "/R2_" + filename)
 
 
 def plot_Bias_variance_using_bootstrap_and_OLS(
@@ -219,84 +235,84 @@ if __name__ == "__main__":
     x, y = np.meshgrid(x, y)
     z = FrankeFunction(x, y)
 
-    ols_plots = [(True, "MSE_OLS.pgf"), (False, "R2_OLS.pgf")]
-
-    for i in ols_plots:
-        plot_MSE_or_R2_as_func_of_degree(
-            x=x.flatten(),
-            y=y.flatten(),
-            z=z.flatten(),
-            nr_of_degs=20,
-            threshold=0.2,
-            scale=True,
-            lam=[0],
-            filename=i[1],
-            regression_type="OLS",
-            plot_MSE=i[0],
-            plot_with_lam=False,
-            variance_of_noise=variance,
-        )
-        plt.clf()
-    lambdas = [10, 1, 0.1, 0.01, 0.001]
-    ridge_plots = [(True, "MSE_Ridge.pgf"), (False, "R2_Ridge.pgf")]
-    for i in ridge_plots:
-        plot_MSE_or_R2_as_func_of_degree(
-            x=x.flatten(),
-            y=y.flatten(),
-            z=z.flatten(),
-            nr_of_degs=20,
-            threshold=0.2,
-            scale=True,
-            lam=lambdas,
-            filename=i[1],
-            regression_type="Ridge",
-            plot_MSE=i[0],
-            plot_with_lam=True,
-            variance_of_noise=variance,
-        )
-        plt.clf()
-
-    alphas = [10, 1, 0.1, 0.01, 0.001]
-    lasso_plots = [(True, "MSE_Lasso.pgf"), (False, "R2_Lasso.pgf")]
-    for i in lasso_plots:
-        plot_MSE_or_R2_as_func_of_degree(
-            x=x.flatten(),
-            y=y.flatten(),
-            z=z.flatten(),
-            nr_of_degs=20,
-            threshold=0.2,
-            scale=True,
-            lam=alphas,
-            filename=i[1],
-            regression_type="Lasso",
-            plot_MSE=i[0],
-            plot_with_lam=True,
-            variance_of_noise=variance,
-        )
-        plt.clf()
-
-    """ plot_Bias_variance_using_bootstrap_and_OLS(
+    plot_MSE_and_R2_as_func_of_degree(
         x=x.flatten(),
         y=y.flatten(),
         z=z.flatten(),
-        nr_of_its=1000,
+        nr_of_degs=5,
+        threshold=0.2,
+        scale=True,
+        lam=[0],
+        filename="OLS.pgf",
+        regression_type="OLS",
+        plot_with_lam=False,
+        variance_of_noise=variance,
+    )
+    plt.clf()
+
+    lambdas = [5, 1, 0.1, 0.01, 0.001, 0.0001]
+    plot_MSE_and_R2_as_func_of_degree(
+        x=x.flatten(),
+        y=y.flatten(),
+        z=z.flatten(),
+        nr_of_degs=5,
+        threshold=0.2,
+        scale=True,
+        lam=lambdas,
+        filename="Ridge.pgf",
+        regression_type="Ridge",
+        plot_with_lam=True,
+        variance_of_noise=variance,
+    )
+    plt.clf()
+
+    alphas = [1, 0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001]
+
+    plot_MSE_and_R2_as_func_of_degree(
+        x=x.flatten(),
+        y=y.flatten(),
+        z=z.flatten(),
+        nr_of_degs=5,
+        threshold=0.2,
+        scale=True,
+        lam=alphas,
+        filename="Lasso.pgf",
+        regression_type="Lasso",
+        plot_with_lam=True,
+        variance_of_noise=variance,
+    )
+    plt.clf()
+
+    plot_Bias_variance_using_bootstrap_and_OLS(
+        x=x.flatten(),
+        y=y.flatten(),
+        z=z.flatten(),
+        nr_of_its=5_000,
         mx_degree=5,
         treshold=0.2,
         scale=True,
         filename="Bias_variance_bootstrap.pgf",
         variance_of_noise=variance,
-    ) """
-    """ plt.clf()
-    plot_bias_variance_using_cross_validation(
-        x=x.flatten(),
-        y=y.flatten(),
-        z=z.flatten(),
-        nr_of_groups=[5, 6, 7, 8, 9, 10],
-        mx_degree=5,
-        lam=0.01,
-        model="OLS",
-        threshold=0.2,
-        scale=True,
-        filename="cross_validation_OLS.pgf",
-        variance_of_noise=variance,
-    ) """
+    )
+    plt.clf()
+
+    cross_vals = [
+        ("OLS", "cross_validation_OLS.pgf", 15),
+        ("Ridge", "cross_validation_Ridge.pgf", 20),
+        ("Lasso", "cross_validation_Lasso.pgf", 20),
+    ]
+    for i in cross_vals:
+        plot_bias_variance_using_cross_validation(
+            x=x.flatten(),
+            y=y.flatten(),
+            z=z.flatten(),
+            nr_of_groups=[5, 6, 7, 8, 9, 10],
+            mx_degree=i[2],
+            lam=0.01,
+            model=i[0],
+            threshold=0.2,
+            scale=True,
+            filename=i[1],
+            variance_of_noise=variance,
+        )
+        plt.clf()

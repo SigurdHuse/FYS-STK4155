@@ -55,7 +55,7 @@ if __name__ == "__main__":
     for i in range(len(lambdas)):
         ax2.plot(degrees, results_Ridge[i])
 
-    alphas = [10, 1, 0.1, 0.01, 0.001]
+    alphas = [1, 0.1, 0.01, 0.001, 0.0001]
     results_Lasso = np.zeros((len(alphas), len(degrees)))
 
     """ for j, deg in enumerate(degrees):
