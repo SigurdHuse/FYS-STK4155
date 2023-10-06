@@ -6,6 +6,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from sklearn.model_selection import train_test_split
 from sklearn.utils import resample
 from matplotlib import cm
+from tqdm import tqdm
 
 
 def FrankeFunction(x: np.array, y: np.array) -> np.array:
@@ -179,7 +180,7 @@ class GeneralRegression:
         # Predicted z-values for test data is stored in each column
         self.bootstrap_results = np.zeros((self.X_test.shape[0], nr_of_its))
 
-        for i in range(nr_of_its):
+        for i in tqdm(range(nr_of_its), desc="Running bootstrap"):
             X_, z_ = resample(self.X_train, self.z_train)
 
             self.computer_parameters_from_input(X_, z_, lam)
@@ -203,7 +204,7 @@ class GeneralRegression:
             self.part[i] = self.part[i - 1] + inc + (extra > 0)
             extra -= 1
 
-        for i in range(1, nr_of_groups + 1):
+        for i in tqdm(range(1, nr_of_groups + 1), desc="Running Cross-validation"):
             # print(self.indexes[0 : self.part[i - 1]])
             self.X_train = np.concatenate(
                 (
@@ -296,7 +297,7 @@ class Lassopredictor(GeneralRegression):
         Args:
             alpha (float): Alpha parameter of Lasso regression.
         """
-        clf = linear_model.Lasso(alpha=alpha, fit_intercept=False, max_iter=int(1e7))
+        clf = linear_model.Lasso(alpha=alpha, fit_intercept=False, max_iter=1000)
         clf.fit(self.X_train, self.z_train)
         self.params = clf.coef_
 
