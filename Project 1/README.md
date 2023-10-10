@@ -1,13 +1,5 @@
 # Project 1 Regression analysis and resampling methods
-This study aims to investigate various regression methods, focusing predominantly on Ordinary Least Squares
-(OLS), Ridge, and Lasso regression, for both synthetic and real digital terrain data. Through the application of
-these methods on Franke’s function, a well-known test function, we gain insights into the strengths and weaknesses
-of each model. Resampling techniques, such as Bootstrap and Cross-Validation, are employed to provide a robust
-evaluation of the models. The analysis reveals that while OLS performs well for simpler models, Ridge and Lasso
-regression offers better resistance to overfitting for complex models. The Bias-Variance tradeoff is also examined,
-demonstrating the impact of model complexity on prediction accuracy. Lastly, the models are applied to real
-digital terrain data, offering promising results despite inherent challenges such as noise and irregularities. The
-study concludes with an identification of limitations and suggestions for future research.
+This study rigorously examines the performance of Ordinary Least Squares (OLS), Ridge, and Lasso regression methods on synthetic data generated using the Franke function and real-world terrain data. For the synthetic data, all methods performed optimally at $\lambda \approx 10^{-5}$, with OLS yielding the most promising results on real-world data, achieving an MSE of $4.12\cdot10^4$ and an R2-score of $0.54$. Utilizing resampling techniques such as bootstrapping and k-fold cross-validation, we dissect the bias-variance tradeoff and demonstrate the effects of model complexity on generalization to unseen data. The study also explores the limitations of the current models and suggests avenues for future research, including advanced feature selection techniques and hyperparameter optimization for Ridge and Lasso regression.
 ## Installation 
 Code was ran with python 3.8 on Ubuntu 20.04.5 LTS, with a Intel® Core™ i7-9750H CPU @ 2.60GHz × 12, to install packages run command
 

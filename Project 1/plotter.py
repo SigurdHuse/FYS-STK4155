@@ -128,7 +128,7 @@ def plot_MSE_and_R2_as_func_of_degree(
 
         results_params[deg, 1 : len(model.params) + 1] = model.params
         results_params[deg, 0] = model.z_train.mean()
-        print(model.z_train.mean())
+
     results_params[0, 0] = model.z_train.mean()
     fig, (ax1, ax2) = plt.subplots(1, 2)
 
