@@ -86,7 +86,7 @@ def plot_OLS(
     tmp = SGD(X, y, grad(CostOLS, 2))
     results, iterations = np.zeros((2, learning_rates.size))
     optimal_error = mean_squared_error(z_test, X_test @ beta_optimal + y.mean())
-
+    print(f"Optimal error using OLS: {optimal_error : e}")
     for idx, learn in enumerate(learning_rates):
         if method == "plain_GD":
             tmp.gradient_descent_plain(max_iter, learn)
@@ -156,7 +156,7 @@ def plot_Ridge(
     plt.rcParams["figure.figsize"] = [10, 10]
     tmp = SGD(X, y, grad(CostRidge, 2))
     results, iterations = np.zeros((2, lambdas.size, learning_rates.size))
-    print(lambdas)
+
     for i, lam in enumerate(lambdas):
         tmp.lam = lam
         for j, learn in enumerate(learning_rates):
@@ -183,7 +183,7 @@ def plot_Ridge(
     for (i, j), z in np.ndenumerate(results):
         plt.text(j, i, "{:0.1e}".format(z), ha="center", va="center")
 
-    plt.colorbar(label="MSE on training data")
+    plt.colorbar(label="MSE on test data")
 
     plt.gca().xaxis.set_major_locator(MultipleLocator(1))
     plt.gca().yaxis.set_major_locator(MultipleLocator(1))
@@ -251,7 +251,7 @@ def plot_logistic(
     plt.gca().yaxis.set_major_locator(MultipleLocator(1))
 
     plt.xlabel("Learning rates")
-    plt.ylabel("Reg param")
+    plt.ylabel("Regularisation paramater")
 
     plt.xticks(
         ticks=list(range(learning_rates.size)),
@@ -313,9 +313,9 @@ if __name__ == "__main__":
 
     z += np.random.normal(0, variance, z.shape)
 
-    plot_entire_dataset(
+    """ plot_entire_dataset(
         x=x, y=y, z=z, dir_name=dir_name, file_name="Franke_function.pdf"
-    )
+    ) """
     nr_of_params = (degree + 1) * (degree + 2) // 2
     X = np.zeros((x.size, nr_of_params), dtype=np.float64)
     idx = 0
@@ -342,7 +342,7 @@ if __name__ == "__main__":
 
     # print(np.linalg.norm(z.flatten() - X @ beta_optimal_OLS))
     # Plain OLS
-    plot_OLS(
+    """ plot_OLS(
         X=X_train,
         y=Y_train,
         learning_rates=np.linspace(1e-5, 1e-2, 40),
@@ -416,10 +416,10 @@ if __name__ == "__main__":
         beta2=0.999,
         X_test=X_test,
         z_test=Y_test,
-    )
+    ) """
 
     # Plain SGD Ridge
-    plot_Ridge(
+    """ plot_Ridge(
         X=X_train,
         y=Y_train,
         learning_rates=np.linspace(1e-5, 1e-2, 10),
@@ -428,10 +428,10 @@ if __name__ == "__main__":
         method="plain_GD",
         X_test=X_test,
         z_test=Y_test,
-    )
+    ) """
 
     # Momentum SGD Rige
-    plot_Ridge(
+    """ plot_Ridge(
         X=X_train,
         y=Y_train,
         learning_rates=np.linspace(1e-5, 1e-2, 10),
@@ -441,9 +441,9 @@ if __name__ == "__main__":
         momentum=0.1,
         X_test=X_test,
         z_test=Y_test,
-    )
+    ) """
 
-    plot_Ridge(
+    """ plot_Ridge(
         X=X_train,
         y=Y_train,
         learning_rates=np.linspace(1e-5, 1e-2, 10),
@@ -453,8 +453,8 @@ if __name__ == "__main__":
         rho=0.99,
         X_test=X_test,
         z_test=Y_test,
-    )
-    plot_Ridge(
+    ) """
+    """ plot_Ridge(
         X=X_train,
         y=Y_train,
         learning_rates=np.linspace(1e-5, 1e-2, 10),
@@ -463,20 +463,20 @@ if __name__ == "__main__":
         method="AdaGrad",
         X_test=X_test,
         z_test=Y_test,
-    )
+    ) """
 
-    plot_Ridge(
+    """ plot_Ridge(
         X=X_train,
         y=Y_train,
         learning_rates=np.linspace(1e-5, 1e-2, 10),
         lambdas=np.logspace(-6, -1, 10),
-        name="AdaGrad_momnetum_SGD_Ridge",
+        name="ADAM_SGD_Ridge",
         method="ADAM",
         beta1=0.9,
         beta2=0.999,
         X_test=X_test,
         z_test=Y_test,
-    )
+    ) """
 
     breast_cancer_wisconsin_original = fetch_ucirepo(id=15)
     X_cancer = breast_cancer_wisconsin_original.data.features
@@ -500,7 +500,7 @@ if __name__ == "__main__":
     plot_logistic(
         X=X_train_cancer,
         y=Y_train_cancer,
-        learning_rates=np.linspace(1e-2, 0.1, 10),
+        learning_rates=np.linspace(1e-3, 0.1, 10),
         reg_param=np.linspace(0, 0.5, 10),
         name="Logistic",
         method="plain_GD",

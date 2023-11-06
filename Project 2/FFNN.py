@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, accuracy_score
 from ucimlrepo import fetch_ucirepo
-import sys
 from tqdm import tqdm
 from plotter_SGD import FrankeFunction
 

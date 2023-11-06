@@ -77,7 +77,7 @@ def compare_sklearn_and_our_code(
             learning_rate_init=learn,
             activation="logistic",
             max_iter=1000,
-            solver="lbfgs",
+            solver="sgd",
             batch_size=100,
         )
         dnn.fit(X, y.ravel())
