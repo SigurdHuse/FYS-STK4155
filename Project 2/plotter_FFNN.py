@@ -20,31 +20,37 @@ file_extension = ".pdf"
 seed = 2023
 
 
-def Relu(x: np.array):
+def Relu(x: np.array) -> np.array:
+    """Computes the Relu function."""
     return np.maximum(x, 0)
 
 
-def deriv_Relu(x: np.array):
+def deriv_Relu(x: np.array) -> np.array:
+    """Computes the derivative of the Relu function."""
     return (x > 0) * 1
 
 
-def Leaky_Relu(x: np.array):
+def Leaky_Relu(x: np.array) -> np.array:
+    """Computes the leaky ReLu function"""
     alpha = 1e-2
     return np.maximum(x, 0) + alpha * np.minimum(0, x)
 
 
-def deriv_Leaky_Relu(x: np.array):
+def deriv_Leaky_Relu(x: np.array) -> np.array:
+    """Computes the derivative of the leaky ReLu function."""
     alpha = 1e-2
     dx = np.ones_like(x)
     dx[x < 0] = alpha
     return dx
 
 
-def tanh(x: np.array):
+def tanh(x: np.array) -> np.array:
+    """Computes the tanh function."""
     return np.tanh(x)
 
 
-def deriv_tanh(x: np.array):
+def deriv_tanh(x: np.array) -> np.array:
+    """Computes the derivative of the tanh function."""
     return 1 / (1 + x * x)
 
 
@@ -57,7 +63,19 @@ def compare_sklearn_and_our_code(
     layers: int,
     neurons_per_layer: int,
     name: str,
-):
+) -> None:
+    """Makes a plot comparing sklearn's and our our implementation of FFNNs.
+
+    Args:
+        X (np.array):                   Design matrix.
+        y (np.array):                   Targets.
+        X_test (np.array):              Test design matrix.
+        Y_test (np.array):              Test targets.
+        learning_rates (np.array):      Array of learning rates to try.
+        layers (int):                   Number of hidden layers in FFNN.
+        neurons_per_layer (int):        Number of neurons per hidden layer.
+        name (str):                     Filename to save plot as.
+    """
     res1, res2 = np.zeros((2, learning_rates.size))
     for idx, learn in enumerate(learning_rates):
         our_model = FFNN(
@@ -109,7 +127,20 @@ def compare_activation_functions(
     layers: int,
     neurons_per_layer: int,
     name: str,
-):
+) -> None:
+    """Compares MSE achieved using different activation functions for the regression problem.
+
+    Args:
+        X (np.array):               Design matrix.
+        y (np.array):               Targets.
+        X_test (np.array):          Test design matrix.
+        Y_test (np.array):          Test targets.
+        learning_rates (np.array):  Array of learning rates to try.
+        lambdas (np.array):         Array of regularisation parameters to try.
+        layers (int):               Number of hidden layers.
+        neurons_per_layer (int):    Number of nodes per hidden layers.
+        name (str):                 Filename to save plot as.
+    """
     plt.rcParams["figure.figsize"] = [10, 10]
     fig, axs = plt.subplots(2, 2)
     fig.set_dpi(250)
@@ -198,7 +229,22 @@ def compare_networks_cancer(
     name: str,
     activation,
     deriv_activation,
-):
+) -> None:
+    """Compares different networks solving the classification problem.
+
+    Args:
+        X (np.array):                   Design matrix.
+        y (np.array):                   Targets.
+        X_test (np.array):              Test design matrix.
+        Y_test (np.array):              Test targets.
+        learning_rates (np.array):      Array of learning rates to try.
+        lambdas (np.array):             Array of regularisation parameters to try.
+        layers (int):                   Number of hidden layers.
+        neurons_per_layer (np.array):   Number of nodes per hidden layer.
+        name (str):                     Filename to save plot as.
+        activation (function):          Activation function.
+        deriv_activation (function):    Derivative of activation function.
+    """
     plt.rcParams["figure.figsize"] = [10, 10]
     fig, axs = plt.subplots(2, 2)
     fig.set_dpi(250)
@@ -275,56 +321,6 @@ def compare_networks_cancer(
     plt.close()
 
 
-def plot_best_frank_approximation(
-    x: np.array,
-    y: np.array,
-    X_train: np.array,
-    X: np.array,
-    z: np.array,
-    file_name: str,
-    X_test,
-    Y_test,
-):
-    model = FFNN(
-        X_data=X_train,
-        Y_data=z,
-        layers=2,
-        activation_function=Relu,
-        activation_function_derivative=deriv_Relu,
-        hidden_neurons=60,
-        epochs=1000,
-        batch_size=10,
-        learning_rate=2.6 * 10 ** (-5),
-        lam=0.4,
-    )
-    model.train()
-
-    new_z = model.predict(X).reshape(x.shape)
-    print(mean_squared_error(model.predict(X_train), Y_train))
-    fig = plt.figure(dpi=250)
-    ax1 = fig.add_subplot(1, 2, 1, projection="3d")
-
-    ax1.plot_surface(
-        x,
-        y,
-        new_z,
-        rstride=1,
-        cstride=1,
-        cmap=cm.coolwarm,
-        linewidth=0,
-        antialiased=False,
-    )
-
-    ax2 = fig.add_subplot(1, 2, 2)
-    surf = ax2.matshow(new_z)
-    fig.colorbar(surf, label="z-value")
-    fig.tight_layout(pad=3.5)
-    # plt.show()
-    # fig.legend()
-    plt.savefig(dir_name + "/" + file_name)
-    plt.close()
-
-
 if __name__ == "__main__":
     np.random.seed(seed)
 
@@ -353,17 +349,6 @@ if __name__ == "__main__":
     X_train = scaler_franke.transform(X_train)
     X_test = scaler_franke.transform(X_test)
 
-    """ plot_best_frank_approximation(
-        x=x,
-        y=y,
-        X_train=X_train,
-        X=X,
-        z=Y_train,
-        file_name="Best_Franke_FFNN.pdf",
-        X_test=X_test,
-        Y_test=Y_test,
-    ) """
-
     compare_sklearn_and_our_code(
         X=X_train,
         y=Y_train,
@@ -375,7 +360,7 @@ if __name__ == "__main__":
         name="comparison_sklearn",
     )
 
-    """ compare_activation_functions(
+    compare_activation_functions(
         X=X_train,
         y=Y_train,
         X_test=X_test,
@@ -385,7 +370,7 @@ if __name__ == "__main__":
         layers=2,
         neurons_per_layer=60,
         name="activation_function_comparison",
-    ) """
+    )
 
     breast_cancer_wisconsin_original = fetch_ucirepo(id=15)
     X_cancer = breast_cancer_wisconsin_original.data.features
@@ -407,7 +392,7 @@ if __name__ == "__main__":
     X_test_cancer = scaler.transform(X_test_cancer)
 
     for layers in [2]:
-        """compare_networks_cancer(
+        compare_networks_cancer(
             X=X_train_cancer,
             y=Y_train_cancer,
             X_test=X_test_cancer,
@@ -419,9 +404,9 @@ if __name__ == "__main__":
             name=f"Cancer_compare_Relu",
             activation=Relu,
             deriv_activation=deriv_Relu,
-        )"""
+        )
 
-        """ compare_networks_cancer(
+        compare_networks_cancer(
             X=X_train_cancer,
             y=Y_train_cancer,
             X_test=X_test_cancer,
@@ -433,9 +418,9 @@ if __name__ == "__main__":
             name=f"Cancer_compare_Leaky_Relu",
             activation=Leaky_Relu,
             deriv_activation=deriv_Leaky_Relu,
-        ) """
+        )
 
-        """ compare_networks_cancer(
+        compare_networks_cancer(
             X=X_train_cancer,
             y=Y_train_cancer,
             X_test=X_test_cancer,
@@ -447,8 +432,8 @@ if __name__ == "__main__":
             name=f"Cancer_compare_sigmoid",
             activation=sigmoid,
             deriv_activation=deriv_sigmoid,
-        ) """
-        """ compare_networks_cancer(
+        )
+        compare_networks_cancer(
             X=X_train_cancer,
             y=Y_train_cancer,
             X_test=X_test_cancer,
@@ -460,4 +445,4 @@ if __name__ == "__main__":
             name=f"Cancer_compare_tanh",
             activation=tanh,
             deriv_activation=deriv_tanh,
-        ) """
+        )

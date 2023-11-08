@@ -44,26 +44,40 @@ def FrankeFunction(x: np.array, y: np.array) -> np.array:
     return term1 + term2 + term3 + term4
 
 
-def derivative_OLS(y: np.array, X: np.array, beta: np.array, lam=None):
+def derivative_OLS(y: np.array, X: np.array, beta: np.array, lam=None) -> np.array:
     """Computes the derivate with respect to beta of the OLS cost function."""
-    # n = X.shape[0]
-    # print(X.shape, beta.shape, y.shape)
-    # print(np.matmul(X, beta).shape)
-    # print((y - X @ beta).shape)
     return -2.0 / y.size * X.T @ (y - X @ beta)
 
 
 def CostOLS(y: np.array, X: np.array, beta: np.array, lam=None) -> np.array:
+    """Cost function for OLS regression.
+
+    Args:
+        y (np.array):       Array of y-values
+        X (np.array):       Design matrix.
+        beta (np.array):    Array of beta coefficients.
+        lam (_type_, optional): Dummy variable so code works for both Ridge and OLS. Defaults to None.
+
+    Returns:
+        np.array: Computes cost function.
+    """
     return np.mean((y - X @ beta) ** 2)
 
 
 def CostRidge(y: np.array, X: np.array, beta: np.array, lam: float) -> np.array:
+    """Computes the cost function for Ridge regression.
+
+    Args:
+        y (np.array):       Array of y-values
+        X (np.array):       Design matrix.
+        beta (np.array):    Array of beta coefficients.
+        lam (float):        Regularisation constant.
+
+    Returns:
+        np.array: Cost function for Ridge regression
+    """
     n = X.shape[0]
     return np.sum((y - X @ beta) ** 2) / n + lam * beta.T @ beta
-
-
-def f(x: np.array) -> np.array:
-    return 4 + 3 * x + 4 * x**2
 
 
 def plot_OLS(
@@ -81,6 +95,26 @@ def plot_OLS(
     momentum: float = None,
     max_iter: int = int(1e3),
 ) -> None:
+    """Plots MSE achieved on test data using various SGD methods with OLS cost function.
+
+    Args:
+        X (np.array):               Design matrix.
+        y (np.array):               Targets.
+        learning_rates (np.array):  Array of learning rates.
+        name (str):                 Filename to save plot as.
+        beta_optimal (np.array):    Optimal beta using OLS with design matrix.
+        method (str):               String specifying SGD method.
+        X_test (np.array):          Test design matrix.
+        z_test (np.array):          Test targets.
+        rho (float, optional):      Rho parameter for RMSprop. Defaults to None.
+        beta1 (float, optional):    Beta1 for ADAM. Defaults to None.
+        beta2 (float, optional):    Beta2 for ADAM. Defaults to None.
+        momentum (float, optional): Momentum for GD momentum. Defaults to None.
+        max_iter (int, optional):   Maximum number of training iterations. Defaults to int(1e3).
+
+    Raises:
+        NotImplementedError: If string specifying method is not implemented.
+    """
     fig = plt.figure(dpi=250)
 
     tmp = SGD(X, y, grad(CostOLS, 2))
@@ -152,7 +186,28 @@ def plot_Ridge(
     beta2: float = None,
     momentum: float = None,
     max_iter: int = int(1e3),
-):
+) -> None:
+    """Plots MSE achieved on test data using various SGD methods with Ridge cost function.
+
+    Args:
+        X (np.array):               Design matrix.
+        y (np.array):               Targets.
+        learning_rates (np.array):  Array of learning rates.
+        lambdas (np.array):         Array of lambdas to check.
+        name (str):                 Filename to save plot as.
+        beta_optimal (np.array):    Optimal beta using OLS with design matrix.
+        method (str):               String specifying SGD method.
+        X_test (np.array):          Test design matrix.
+        z_test (np.array):          Test targets.
+        rho (float, optional):      Rho parameter for RMSprop. Defaults to None.
+        beta1 (float, optional):    Beta1 for ADAM. Defaults to None.
+        beta2 (float, optional):    Beta2 for ADAM. Defaults to None.
+        momentum (float, optional): Momentum for GD momentum. Defaults to None.
+        max_iter (int, optional):   Maximum number of training iterations. Defaults to int(1e3).
+
+    Raises:
+        NotImplementedError: _description_
+    """
     plt.rcParams["figure.figsize"] = [10, 10]
     tmp = SGD(X, y, grad(CostRidge, 2))
     results, iterations = np.zeros((2, lambdas.size, learning_rates.size))
@@ -220,7 +275,27 @@ def plot_logistic(
     beta2: float = None,
     momentum: float = None,
     max_iter: int = int(5e3),
-):
+) -> None:
+    """Plots accuracy score achieved on test data using various SGD methods with Logistic cost function.
+
+    Args:
+        X (np.array):               Design matrix.
+        y (np.array):               Targets.
+        learning_rates (np.array):  Array of learning rates.
+        name (str):                 Filename to save plot as.
+        beta_optimal (np.array):    Optimal beta using OLS with design matrix.
+        method (str):               String specifying SGD method.
+        X_test (np.array):          Test design matrix.
+        z_test (np.array):          Test targets.
+        rho (float, optional):      Rho parameter for RMSprop. Defaults to None.
+        beta1 (float, optional):    Beta1 for ADAM. Defaults to None.
+        beta2 (float, optional):    Beta2 for ADAM. Defaults to None.
+        momentum (float, optional): Momentum for GD momentum. Defaults to None.
+        max_iter (int, optional):   Maximum number of training iterations. Defaults to int(5e3).
+
+    Raises:
+        NotImplementedError: _description_
+    """
     plt.rcParams["figure.figsize"] = [10, 10]
     tmp = LogReg(X, y, cross_entropy_derivative)
     results, iterations = np.zeros((2, reg_param.size, learning_rates.size))
@@ -272,7 +347,16 @@ def plot_logistic(
 
 def plot_entire_dataset(
     x: np.array, y: np.array, z: np.array, dir_name: str, file_name: str
-):
+) -> None:
+    """Plot the entire dataset in 3D.
+
+    Args:
+        x (np.array):       x-coordinates.
+        y (np.array):       y-coordinates.
+        z (np.array):       z-coordinates.
+        dir_name (str):     Directory name to save plot in.
+        file_name (str):    Filename to save plot as.
+    """
     fig = plt.figure(dpi=250)
     ax1 = fig.add_subplot(1, 2, 1, projection="3d")
 
@@ -291,8 +375,6 @@ def plot_entire_dataset(
     surf = ax2.matshow(z)
     fig.colorbar(surf, label="z-value")
     fig.tight_layout(pad=3.5)
-    # plt.show()
-    # fig.legend()
     plt.savefig(dir_name + "/" + file_name)
     plt.close()
 
@@ -313,9 +395,9 @@ if __name__ == "__main__":
 
     z += np.random.normal(0, variance, z.shape)
 
-    """ plot_entire_dataset(
+    plot_entire_dataset(
         x=x, y=y, z=z, dir_name=dir_name, file_name="Franke_function.pdf"
-    ) """
+    )
     nr_of_params = (degree + 1) * (degree + 2) // 2
     X = np.zeros((x.size, nr_of_params), dtype=np.float64)
     idx = 0
@@ -340,9 +422,8 @@ if __name__ == "__main__":
 
     beta_optimal_OLS = np.linalg.pinv(X_train.T @ X_train) @ X_train.T @ Y_train
 
-    # print(np.linalg.norm(z.flatten() - X @ beta_optimal_OLS))
     # Plain OLS
-    """ plot_OLS(
+    plot_OLS(
         X=X_train,
         y=Y_train,
         learning_rates=np.linspace(1e-5, 1e-2, 40),
@@ -362,31 +443,6 @@ if __name__ == "__main__":
         beta_optimal=beta_optimal_OLS,
         method="momentum_GD",
         momentum=0.2,
-        X_test=X_test,
-        z_test=Y_test,
-    )
-
-    # AdaGrad momnetum OLS
-    plot_OLS(
-        X=X_train,
-        y=Y_train,
-        learning_rates=np.linspace(1e-5, 1e-2, 40),
-        name="AdaGrad_SGD_OLS_momentum",
-        beta_optimal=beta_optimal_OLS,
-        method="AdaGrad",
-        momentum=0.1,
-        X_test=X_test,
-        z_test=Y_test,
-    )
-
-    # AdaGrad no momnetum OLS
-    plot_OLS(
-        X=X_train,
-        y=Y_train,
-        learning_rates=np.linspace(1e-5, 1e-2, 40),
-        name="AdaGrad_SGD_OLS_no_momentum",
-        beta_optimal=beta_optimal_OLS,
-        method="AdaGrad",
         X_test=X_test,
         z_test=Y_test,
     )
@@ -416,10 +472,10 @@ if __name__ == "__main__":
         beta2=0.999,
         X_test=X_test,
         z_test=Y_test,
-    ) """
+    )
 
     # Plain SGD Ridge
-    """ plot_Ridge(
+    plot_Ridge(
         X=X_train,
         y=Y_train,
         learning_rates=np.linspace(1e-5, 1e-2, 10),
@@ -428,10 +484,10 @@ if __name__ == "__main__":
         method="plain_GD",
         X_test=X_test,
         z_test=Y_test,
-    ) """
+    )
 
     # Momentum SGD Rige
-    """ plot_Ridge(
+    plot_Ridge(
         X=X_train,
         y=Y_train,
         learning_rates=np.linspace(1e-5, 1e-2, 10),
@@ -441,9 +497,9 @@ if __name__ == "__main__":
         momentum=0.1,
         X_test=X_test,
         z_test=Y_test,
-    ) """
+    )
 
-    """ plot_Ridge(
+    plot_Ridge(
         X=X_train,
         y=Y_train,
         learning_rates=np.linspace(1e-5, 1e-2, 10),
@@ -453,19 +509,9 @@ if __name__ == "__main__":
         rho=0.99,
         X_test=X_test,
         z_test=Y_test,
-    ) """
-    """ plot_Ridge(
-        X=X_train,
-        y=Y_train,
-        learning_rates=np.linspace(1e-5, 1e-2, 10),
-        lambdas=np.logspace(-6, -1, 10),
-        name="AdaGrad_no_momnetum_SGD_Ridge",
-        method="AdaGrad",
-        X_test=X_test,
-        z_test=Y_test,
-    ) """
+    )
 
-    """ plot_Ridge(
+    plot_Ridge(
         X=X_train,
         y=Y_train,
         learning_rates=np.linspace(1e-5, 1e-2, 10),
@@ -476,7 +522,7 @@ if __name__ == "__main__":
         beta2=0.999,
         X_test=X_test,
         z_test=Y_test,
-    ) """
+    )
 
     breast_cancer_wisconsin_original = fetch_ucirepo(id=15)
     X_cancer = breast_cancer_wisconsin_original.data.features
@@ -486,7 +532,6 @@ if __name__ == "__main__":
     X_cancer = np.nan_to_num(X_cancer.to_numpy())
 
     y_cancer = (y_cancer - 2) / 2
-    # y_cancer = np.array([(1 - i, i) for i in y_cancer]).reshape(X_cancer.shape[0], 2)
 
     X_train_cancer, X_test_cancer, Y_train_cancer, Y_test_cancer = train_test_split(
         X_cancer, y_cancer, test_size=0.2

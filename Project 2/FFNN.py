@@ -9,30 +9,42 @@ from tqdm import tqdm
 from plotter_SGD import FrankeFunction
 
 
-def f(x: np.array) -> np.array:
-    return 4 + 3 * x + 4 * x**2
-
-
 def CostOLS(y: np.array, X: np.array) -> np.array:
+    """Cost function for OLS regression.
+
+    Args:
+        y (np.array): Array of y-values
+        X (np.array): Prediction values.
+
+    Returns:
+        np.array: Computes cost function.
+    """
     n = X.shape[0]
     return np.sum((y - X) ** 2) / 2
 
 
-def sigmoid(x):
+def sigmoid(x: np.array) -> np.array:
+    """Computes the Sigmoid function."""
     return 1 / (1 + np.exp(-x))
 
 
-def deriv_sigmoid(x):
+def deriv_sigmoid(x: np.array) -> np.array:
+    """Compute the derivative of the sigmoid function."""
     return sigmoid(x) * (1 - sigmoid(x))
 
 
-def accuracy(t, y):
+def accuracy(t: np.array, y: np.array) -> float:
+    """Computes the accuracy score of t an y.
+
+    Args:
+        t (np.array): Truth values.
+        y (np.array): Predicted values
+
+    Returns:
+        float: Accuracy score.
+    """
     n = t.size
     return np.sum(t.astype("int") == y.astype("int")) / n
-
-
-def f(x):
-    return 4 + 3 * x + 4 * x**2
 
 
 class FFNN:
@@ -204,14 +216,12 @@ class FFNN:
             y = np.argmax(y, axis=1)
             b = np.zeros((len(y), self.n_categories))
             b[np.arange(len(y)), y] = 1
-            # print(b)
-            # print(np.eye(len(y))[np.argmax(y, axis=1)])
             return b
 
         return y
 
     def train(self) -> None:
-        """Performs the training of the network using SGD and backpropagation."""
+        """Performs the training of the network using plain GD and backpropagation."""
 
         data_indices = np.arange(self.n_inputs)
 
@@ -233,52 +243,6 @@ class FFNN:
 if __name__ == "__main__":
     epochs = 2000
     batch_size = 20
-
-    """ n = 20
-    degree = 5
-    x = np.linspace(0, 1, n)
-    y = np.linspace(0, 1, n)
-    x, y = np.meshgrid(x, y)
-    z = FrankeFunction(x, y)
-
-    nr_of_params = (degree + 1) * (degree + 2) // 2
-    X = np.zeros((x.size, nr_of_params), dtype=np.float64)
-    idx = 0
-
-    for j in range(0, degree + 1):
-        for i in range(0, degree + 1):
-            if i + j > degree:
-                break
-            X[:, idx] = np.power(x.flatten(), i) * np.power(y.flatten(), j)
-            idx += 1
-
-    input = (z.flatten()).reshape(-1, 1)
-
-    X_train, X_test, Y_train, Y_test = train_test_split(X, input, test_size=0.2)
-
-    dnn = FFNN(
-        X_data=X_train,
-        Y_data=Y_train,
-        activation_function=sigmoid,
-        activation_function_derivative=deriv_sigmoid,
-        learning_rate=0.001,
-        lam=0.01,
-        layers=2,
-        epochs=epochs,
-        batch_size=batch_size,
-        hidden_neurons=50,
-        n_categories=1,
-        softmax_last_layer=False,
-    )
-    dnn.train()
-    test_predict = dnn.predict(X_test)
-    print(test_predict.shape)
-    plt.scatter(X_train, test_predict)
-    plt.scatter(X_train, Y_train)
-    plt.show()
-    # print(test_predict, Y_test)
-    # accuracy score from scikit library
-    print("Accuracy score on test set: ", mean_squared_error(Y_test, test_predict)) """
 
     breast_cancer_wisconsin_original = fetch_ucirepo(id=15)
     X = breast_cancer_wisconsin_original.data.features

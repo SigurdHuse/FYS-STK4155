@@ -26,12 +26,19 @@ def CostOLS(y: np.array, X: np.array, beta: np.array, lam=None) -> np.array:
     return np.sum((y - X @ beta) ** 2) / n
 
 
-def CostRidge(y, X, beta, lam):
+def CostRidge(y: np.array, X: np.array, beta: np.array, lam: float):
+    """Computes the cost function for Ridge regression.
+
+    Args:
+        y (np.array):       Array of y-values
+        X (np.array):       Design matrix.
+        beta (np.array):    Array of beta coefficients.
+        lam (float):        Regularisation constant.
+
+    Returns:
+        np.array: Cost function for Ridge regression
+    """
     return np.sum((y - X @ beta) ** 2) + lam * beta.T @ beta
-
-
-def f(x):
-    return 4 + 3 * x + 4 * x**2
 
 
 class SGD:
@@ -67,7 +74,15 @@ class SGD:
 
         self.data_indices = np.arange(self.n)
 
-    def learning_rate(self, t):
+    def learning_rate(self, t: float) -> float:
+        """Computes decreasing learning rate for mini-batch method.
+
+        Args:
+            t (float): Denotes current batch.
+
+        Returns:
+            float: learning rate.
+        """
         t0 = 1.0
         t1 = 10
         return t0 / (t + t1)
@@ -86,7 +101,6 @@ class SGD:
         self.iterations = 0
         self.beta = np.random.randn(self.parameters, 1)
         beta_old = self.beta + 10
-        # print(self.beta)
 
         while self.iterations < max_iter and np.linalg.norm(self.beta - beta_old) > tol:
             gradient = self.derivative(self.y, self.X, self.beta, self.lam)
@@ -117,7 +131,6 @@ class SGD:
 
         while self.iterations < max_iter and np.linalg.norm(self.beta - beta_old) > tol:
             gradient = self.derivative(self.y, self.X, self.beta, self.lam)
-            # gradient += self.reg_param * self.beta
 
             new_change = learning_rate * gradient + momentum * change
             beta_old = self.beta.copy()
@@ -133,7 +146,7 @@ class SGD:
         epochs: int,
         batches: int,
     ):
-        """Perform SGD using batches
+        """Perform SGD using mini-batches with decreasing learning rate.
 
         Args:
             learning_rate (float): Learning rate.
@@ -167,6 +180,16 @@ class SGD:
         momentum: float = None,
         tol: float = 1e-8,
     ):
+        """Performs SGD method ADAgrad with or without momentum.
+
+        Args:
+            learning_rate (float):          Learning rate.
+            epochs (int):                   Number of epochs to compute.
+            batches (int):                  Batch size.
+            with_momentum (bool, optional): Decisides wheter or not to use momentum. Defaults to False.
+            momentum (float, optional):     Momentum constant. Defaults to None.
+            tol (float, optional):          Convergence tolerance. Defaults to 1e-8.
+        """
         m = int(self.n / batches)
         self.beta = np.random.randn(self.parameters, 1)
         beta_old = self.beta + 10
@@ -211,10 +234,11 @@ class SGD:
         """Performs SGD using RMSprop to tune learning rate.
 
         Args:
-            learning_rate (float): Learning rate.
-            epochs (int): Number of epochs.
-            batches (int): Batches per epoch.
-            rho (float): Rho parameter used in RMSprop.
+            learning_rate (float):  Learning rate.
+            epochs (int):           Number of epochs.
+            batches (int):          Batches per epoch.
+            rho (float):            Rho parameter used in RMSprop.
+            tol (float, optional):  Convergence tolerance. Defaults to 1e-8
         """
         m = int(self.n / batches)
         self.beta = np.random.randn(self.parameters, 1)
@@ -254,11 +278,12 @@ class SGD:
         """Performs SGD using ADAM to tune learning parameter.
 
         Args:
-            learning_rate (float): Learning rate.
-            epochs (int): Number of epochs.
-            batches (int): Batches per epoch.
-            beta1 (float): Beta1 parameter in ADAM.
-            beta2 (float): Beta2 parameter in ADAM.
+            learning_rate (float):  Learning rate.
+            epochs (int):           Number of epochs.
+            batches (int):          Batches per epoch.
+            beta1 (float):          Beta1 parameter in ADAM.
+            beta2 (float):          Beta2 parameter in ADAM.
+            tol (float, optional):  Convergence tolerance. Defaults to 1e-8
         """
         m = int(self.n / batches)
 
@@ -299,29 +324,3 @@ class SGD:
                 self.beta -= update
 
             self.iterations += 1
-
-
-if __name__ == "__main__":
-    np.random.seed(2023)
-    learning_rate = np.linspace(0.1, 0.2, 100)
-    results = np.zeros(learning_rate.size)
-
-    np.random.seed(2023)
-    n = 100
-    x = 2 * np.random.rand(n, 1)
-    y = f(x) + np.random.randn(n, 1)
-    X = np.c_[np.ones((n, 1)), x]
-
-    tmp = SGD(X, y, grad(CostOLS, 2))
-    beta_optimal = np.linalg.pinv(X.T @ X) @ X.T @ y
-
-    for idx, learn in enumerate(learning_rate):
-        tmp.gradient_descent_momentum(int(1e4), learn, 0.1)
-        # print(tmp.iterations)
-        results[idx] = np.linalg.norm(tmp.beta - beta_optimal)
-
-    plt.plot(learning_rate, results)
-    plt.xlabel("Learning rate")
-    plt.ylabel("Error between optimal beta and predicted beta")
-    plt.grid()
-    plt.show()
