@@ -114,7 +114,7 @@ class SGD:
 
     def gradient_descent_momentum(
         self, max_iter: int, learning_rate: float, momentum: float, tol: float = 1e-8
-    ):
+    ) -> None:
         """Performs SGD with momentum using a fixed number of training iterations, of until distance between betas
            in iterations are smaller than tol.
 
@@ -145,7 +145,7 @@ class SGD:
         learning_rate: float,
         epochs: int,
         batches: int,
-    ):
+    ) -> None:
         """Perform SGD using mini-batches with decreasing learning rate.
 
         Args:
@@ -179,7 +179,7 @@ class SGD:
         with_momentum: bool = False,
         momentum: float = None,
         tol: float = 1e-8,
-    ):
+    ) -> None:
         """Performs SGD method ADAgrad with or without momentum.
 
         Args:
@@ -230,7 +230,7 @@ class SGD:
         batches: int,
         rho: float,
         tol: float = 1e-8,
-    ):
+    ) -> None:
         """Performs SGD using RMSprop to tune learning rate.
 
         Args:
@@ -274,7 +274,7 @@ class SGD:
         beta1: float,
         beta2: float,
         tol: float = 1e-8,
-    ):
+    ) -> None:
         """Performs SGD using ADAM to tune learning parameter.
 
         Args:
