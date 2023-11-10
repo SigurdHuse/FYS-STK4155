@@ -131,6 +131,7 @@ class SGD:
 
         while self.iterations < max_iter and np.linalg.norm(self.beta - beta_old) > tol:
             gradient = self.derivative(self.y, self.X, self.beta, self.lam)
+            gradient += self.reg_param * self.beta
 
             new_change = learning_rate * gradient + momentum * change
             beta_old = self.beta.copy()
@@ -302,11 +303,8 @@ class SGD:
             beta_old = self.beta.copy()
             for i in range(m):
                 idx = np.random.choice(self.data_indices, size=batches, replace=False)
-                # random_index = batches * np.random.randint(m)
                 cur_X = self.X[idx]
                 cur_y = self.y[idx]
-                # cur_X = self.X[random_index : random_index + batches]
-                # cur_y = self.y[random_index : random_index + batches]
 
                 gradient = self.derivative(cur_y, cur_X, self.beta, self.lam)
                 gradient += self.reg_param * self.beta
