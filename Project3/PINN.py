@@ -108,6 +108,19 @@ class PINN:
 
         return coordinates, values, domain_points
 
+    def extract_points_given_sampler(self, sampler, domain, device: str = "cuda"):
+        """Exactracts randomly sampled predicted points in the domain, using a predetermined sampler."""
+        inp_points, output, _ = tp.utils.plotting.plot_functions._create_plot_output(
+            self.model, lambda u: u, sampler, device=device)
+
+        domain_points = tp.utils.plotting.plot_functions._extract_domain_points(inp_points, domain,
+                                                                                len(sampler))
+
+        coordinates = output["x"].detach().numpy()
+        values = output["u"].detach().numpy()
+
+        return coordinates, values, domain_points
+
     def plot_figure(self, n_points: int, lambda_func, plot_type: str, filename: str):
         """Plots figure using randomly sampled predicted points.
 
